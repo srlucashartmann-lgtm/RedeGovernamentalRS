@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <script>if (sessionStorage.getItem('adm_auth') !== 'true') window.location.href = 'index.html';</script>
+    <meta charset="UTF-8">
+    <title>Dashboard | Performance RS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        :root { --primary: #0f172a; --gold: #f9d616; --bg: #f8fafc; --success: #10b981; }
+        body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; }
+        .navbar { background: var(--primary); border-bottom: 4px solid var(--gold); padding: 1rem 0; }
+        .hero-box { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 2rem; color: white; margin-bottom: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .card-dash { background: white; border: none; border-radius: 20px; padding: 1.5rem; height: 100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .progress { height: 12px; border-radius: 6px; background-color: rgba(255,255,255,0.1); }
+        .progress-bar { background-color: var(--gold); border-radius: 6px; }
+        #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="spinner-border text-primary mb-3"></div>
+    <h6 class="fw-bold text-muted">Consolidando Performance RS...</h6>
+</div>
+
+<nav class="navbar navbar-dark mb-4">
+    <div class="container d-flex justify-content-between align-items-center">
+        <span class="navbar-brand fw-800 fs-4">OPERACIONAL <span class="text-warning">RS</span></span>
+        <div class="d-flex gap-2">
+            <a href="detalhes.html" class="btn btn-warning fw-bold rounded-pill px-4">VER DETALHES</a>
+            <button onclick="sessionStorage.clear(); location.reload();" class="btn btn-outline-light rounded-pill"><i class="fas fa-right-from-bracket"></i></button>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    <div class="hero-box">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <h1 class="fw-800 mb-2">Progresso da Auditoria</h1>
+                <p class="text-white-50 mb-4">Acompanhamento consolidado de todas as secretarias e órgãos mapeados.</p>
+                <div class="d-flex align-items-end gap-3 mb-2">
+                    <span class="display-4 fw-800" id="p-perc">0%</span>
+                    <span class="mb-2 text-white-50">concluído</span>
+                </div>
+                <div class="progress mb-3">
+                    <div id="p-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="col-md-5 text-md-end">
+                <div class="p-3 bg-white bg-opacity-10 rounded-4 d-inline-block text-start">
+                    <div class="small text-white-50">Estimativa de Conclusão</div>
+                    <div class="h3 fw-800 mb-0"><span id="days">--</span> dias</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card-dash">
+                <h6 class="fw-bold text-muted mb-4 uppercase small">Status Geral (Órgãos)</h6>
+                <canvas id="c1"></canvas>
+                <div class="mt-4 text-center">
+                    <div class="small text-muted" id="sub-perfis">0 Perfis Mapeados (IG+FB)</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card-dash">
+                <h6 class="fw-bold text-muted mb-4 uppercase small">Ranking de Performance por Pasta</h6>
+                <canvas id="c2" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const FONTES = [
+        { nome: "Agricultura", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=317010714&single=true&output=csv" },
+        { nome: "Ciência e Tecnologia", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=761526176&single=true&output=csv" },
+        { nome: "Meio Ambiente", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=247180748&single=true&output=csv" },
+        { nome: "Cultura", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=1822241493&single=true&output=csv" },
+        { nome: "Saúde", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=1230676976&single=true&output=csv" },
+        { nome: "Planejamento", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=721143329&single=true&output=csv" },
+        { nome: "Polícia Civil", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=33782106&single=true&output=csv" },
+        { nome: "Brigada Militar", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=172609922&single=true&output=csv" },
+        { nome: "Bombeiros", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=874040455&single=true&output=csv" },
+        { nome: "Detran", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=477805074&single=true&output=csv" },
+        { nome: "IGP", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=877474937&single=true&output=csv" },
+        { nome: "Fazenda", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=999891661&single=true&output=csv" },
+        { nome: "Desenvolvimento Econômico", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=108826985&single=true&output=csv" },
+        { nome: "Justiça", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=2097801446&single=true&output=csv" },
+        { nome: "Logística e Transportes", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=1623053344&single=true&output=csv" }
+    ];
+
+    async function init() {
+        try {
+            let totalOrgaos = 0;
+            let auditadosOrgaos = 0;
+            let totalPerfis = 0;
+            let secStats = [];
+
+            const promises = FONTES.map(async (f) => {
+                const res = await fetch(f.url);
+                const data = Papa.parse(await res.text(), { header: true, skipEmptyLines: true }).data;
+                
+                let sTotal = 0;
+                let sAudit = 0;
+
+                data.forEach(row => {
+                    const orgaoNome = row['Órgão'] || row['Orgão'];
+                    if (orgaoNome && orgaoNome.trim() !== "") {
+                        sTotal++;
+                        if ((row['Status'] || '').trim().toUpperCase() === 'AUDITADO') {
+                            sAudit++;
+                        }
+                        if (row['Instagram'] && row['Instagram'].length > 10) totalPerfis++;
+                        if (row['Facebook'] && row['Facebook'].length > 10) totalPerfis++;
+                    }
+                });
+
+                totalOrgaos += sTotal;
+                auditadosOrgaos += sAudit;
+                secStats.push({ 
+                    nome: f.nome, 
+                    perc: sTotal ? Math.round((sAudit / sTotal) * 100) : 0 
+                });
+            });
+
+            await Promise.all(promises);
+
+            const percGeral = totalOrgaos ? Math.round((auditadosOrgaos / totalOrgaos) * 100) : 0;
+            document.getElementById('p-perc').innerText = percGeral + "%";
+            document.getElementById('p-bar').style.width = percGeral + "%";
+            document.getElementById('sub-perfis').innerText = `${totalPerfis} Perfis Mapeados (IG+FB)`;
+
+            // Estimativa baseada em volume restante
+            const faltam = totalOrgaos - auditadosOrgaos;
+            document.getElementById('days').innerText = Math.ceil(faltam / 10) || 0;
+
+            // Gráfico 1: Status Geral
+            new Chart(document.getElementById('c1'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Auditados', 'Pendentes'],
+                    datasets: [{
+                        data: [auditadosOrgaos, totalOrgaos - auditadosOrgaos],
+                        backgroundColor: ['#10b981', '#f1f5f9'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { cutout: '80%', plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Gráfico 2: Ranking
+            const sorted = secStats.sort((a,b) => b.perc - a.perc);
+            new Chart(document.getElementById('c2'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(s => s.nome),
+                    datasets: [{
+                        label: '% Concluído',
+                        data: sorted.map(s => s.perc),
+                        backgroundColor: '#0f172a',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { x: { max: 100, grid: { display: false } } }
+                }
+            });
+
+            document.getElementById('loader').style.display = 'none';
+        } catch(e) { console.error("Erro ao carregar dashboard:", e); }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
