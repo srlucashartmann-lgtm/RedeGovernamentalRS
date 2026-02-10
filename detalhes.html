@@ -11,7 +11,39 @@
         :root { --primary: #0f172a; --accent: #004a8e; --success: #198754; --danger: #dc3545; --bg: #f4f7f9; }
         body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: #334155; min-height: 100vh; display: flex; flex-direction: column; }
         .navbar { background: var(--primary); border-bottom: 4px solid #f9d616; padding: 1rem 0; }
-        .kpi-card { background: white; border: none; border-radius: 16px; padding: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #edf2f7; }
+        .kpi-card {
+            background: white;
+            border: none;
+            border-radius: 16px;
+            padding: 1.1rem 1.2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #edf2f7;
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+        }
+        .kpi-total { background: #e0f2fe; }
+        .kpi-audit { background: #ecfdf3; }
+        .kpi-pend { background: #fef2f2; }
+        .kpi-imp { background: #fffbeb; }
+        .kpi-prog { background: var(--primary); color: #fff; }
+        .kpi-prog .stat-label { color: #cbd5f5; }
+        .kpi-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15,23,42,0.08);
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+        .kpi-total .kpi-icon { background: rgba(37,99,235,0.14); color: #1d4ed8; }
+        .kpi-audit .kpi-icon { background: rgba(22,163,74,0.14); color: #15803d; }
+        .kpi-pend .kpi-icon { background: rgba(220,38,38,0.14); color: #b91c1c; }
+        .kpi-imp .kpi-icon { background: rgba(245,158,11,0.18); color: #b45309; }
+        .kpi-prog .kpi-icon { background: rgba(15,23,42,0.32); color: #e5e7eb; }
         .stat-val { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
         .stat-label { font-size: 0.65rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
         .sec-card { background: white; border-radius: 15px; padding: 1.2rem; transition: 0.3s; cursor: pointer; border: 1px solid #edf2f7; height: 100%; position: relative; }
@@ -21,6 +53,7 @@
         .status-badge { padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 0.6rem; text-transform: uppercase; }
         .bg-ok { background: #d1e7dd; color: var(--success); }
         .bg-pend { background: #f8d7da; color: var(--danger); }
+        .bg-imp { background: #f97316; color: #fff; }
         .social-active-ig { color: #E1306C; transition: 0.2s; }
         .social-active-fb { color: #1877F2; transition: 0.2s; }
         .social-active-ig:hover, .social-active-fb:hover { opacity: 0.7; transform: scale(1.1); }
@@ -47,11 +80,55 @@
 </nav>
 
 <div class="container py-4">
+    <div class="row g-3 mb-2 text-center">
+        <div class="col-md-4">
+            <div class="kpi-card kpi-total">
+                <div class="kpi-icon"><i class="fas fa-building"></i></div>
+                <div class="text-start flex-grow-1">
+                    <div class="stat-label">Total de Órgãos</div>
+                    <div id="t-p" class="stat-val mt-1">0</div>
+                    <small class="text-muted" style="font-size: 10px;" id="sub-p">0 Perfis Mapeados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card kpi-audit">
+                <div class="kpi-icon"><i class="fas fa-circle-check"></i></div>
+                <div class="text-start flex-grow-1">
+                    <div class="stat-label">Órgãos Auditados</div>
+                    <div id="t-o" class="stat-val mt-1">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card kpi-pend">
+                <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+                <div class="text-start flex-grow-1">
+                    <div class="stat-label">Órgãos Pendentes</div>
+                    <div id="t-pe" class="stat-val mt-1">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row g-3 mb-4 text-center">
-        <div class="col-md-3"><div class="kpi-card"><div class="stat-label">Total de Órgãos</div><div id="t-p" class="stat-val mt-2">0</div><small class="text-muted" style="font-size: 10px;" id="sub-p">0 Perfis Mapeados</small></div></div>
-        <div class="col-md-3"><div class="kpi-card text-success"><div class="stat-label">Órgãos Auditados</div><div id="t-o" class="stat-val mt-2">0</div></div></div>
-        <div class="col-md-3"><div class="kpi-card text-danger"><div class="stat-label">Órgãos Pendentes</div><div id="t-pe" class="stat-val mt-2">0</div></div></div>
-        <div class="col-md-3"><div class="kpi-card bg-primary text-white"><div class="stat-label text-white-50">Progresso Geral</div><div id="t-perc" class="stat-val mt-2 text-white">0%</div></div></div>
+        <div class="col-md-6">
+            <div class="kpi-card kpi-imp">
+                <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                <div class="text-start flex-grow-1">
+                    <div class="stat-label">Órgãos com Impedimento</div>
+                    <div id="t-imp" class="stat-val mt-1">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="kpi-card kpi-prog">
+                <div class="kpi-icon"><i class="fas fa-gauge-high"></i></div>
+                <div class="text-start flex-grow-1">
+                    <div class="stat-label text-white-50">Progresso Geral</div>
+                    <div id="t-perc" class="stat-val mt-1 text-white">0%</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-3 mb-5" id="gridSecretarias"></div>
@@ -88,6 +165,17 @@
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg rounded-4"><div class="modal-body p-4" id="corpoFicha"></div><div class="modal-footer border-0 p-3"><button type="button" class="btn btn-light rounded-pill w-100 fw-bold" data-bs-dismiss="modal">FECHAR</button></div></div></div>
 </div>
 
+<div class="modal fade" id="modalObs" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-body p-4" id="corpoObs"></div>
+            <div class="modal-footer border-0 p-3">
+                <button type="button" class="btn btn-light rounded-pill w-100 fw-bold" data-bs-dismiss="modal">FECHAR</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -100,7 +188,7 @@
         { nome: "Saúde", icon: "fas fa-hospital", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=1230676976&single=true&output=csv" },
         { nome: "Planejamento", icon: "fas fa-clipboard-list", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=721143329&single=true&output=csv" },
         { nome: "Polícia Civil", icon: "fas fa-shield", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=33782106&single=true&output=csv" },
-        { nome: "Brigada Militar", icon: "fas fa-shield-check", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=172609922&single=true&output=csv" },
+        { nome: "Brigada Militar", icon: "fas fa-user-shield", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=172609922&single=true&output=csv" },
         { nome: "Bombeiros", icon: "fas fa-fire", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=874040455&single=true&output=csv" },
         { nome: "Detran", icon: "fas fa-car", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=477805074&single=true&output=csv" },
         { nome: "IGP", icon: "fas fa-fingerprint", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=877474937&single=true&output=csv" },
@@ -117,16 +205,23 @@
             const promises = FONTES.map(async (f) => {
                 const res = await fetch(f.url);
                 const data = Papa.parse(await res.text(), { header: true, skipEmptyLines: true }).data;
-                return data.map((row, idx) => ({
-                    ...row,
-                    uid: f.nome.replace(/\s/g, '') + idx,
-                    nome: row['Órgão'] || row['Orgão'],
-                    isAuditado: (row['Status'] || '').trim().toUpperCase() === 'AUDITADO',
-                    igLink: row['Instagram'] && row['Instagram'].length > 10 ? row['Instagram'] : null,
-                    fbLink: row['Facebook'] && row['Facebook'].length > 10 ? row['Facebook'] : null,
-                    fonte: f.nome,
-                    icon: f.icon
-                })).filter(i => i.nome);
+                return data.map((row, idx) => {
+                    const statusRaw = (row['Status'] || '').trim();
+                    const statusUpper = statusRaw.toUpperCase();
+                    return {
+                        ...row,
+                        uid: f.nome.replace(/\s/g, '') + idx,
+                        nome: row['Órgão'] || row['Orgão'],
+                        isAuditado: statusUpper === 'AUDITADO',
+                        statusRaw,
+                        statusUpper,
+                        observacoes: row['Observações'] || row['Observacoes'] || '',
+                        igLink: row['Instagram'] && row['Instagram'].length > 10 ? row['Instagram'] : null,
+                        fbLink: row['Facebook'] && row['Facebook'].length > 10 ? row['Facebook'] : null,
+                        fonte: f.nome,
+                        icon: f.icon
+                    };
+                }).filter(i => i.nome);
             });
             mastD = (await Promise.all(promises)).flat();
             renderHub();
@@ -138,10 +233,13 @@
     function updateKPIs() {
         const totalOrgaos = mastD.length;
         const auditadosOrgaos = mastD.filter(o => o.isAuditado).length;
+        const impedimentosOrgaos = mastD.filter(o => o.statusUpper === 'IMPEDIMENTO').length;
+        const pendentesOrgaos = totalOrgaos - auditadosOrgaos - impedimentosOrgaos;
         let totalPerfis = mastD.reduce((acc, o) => acc + (o.igLink ? 1 : 0) + (o.fbLink ? 1 : 0), 0);
         document.getElementById('t-p').innerText = totalOrgaos;
         document.getElementById('t-o').innerText = auditadosOrgaos;
-        document.getElementById('t-pe').innerText = totalOrgaos - auditadosOrgaos;
+        document.getElementById('t-pe').innerText = pendentesOrgaos < 0 ? 0 : pendentesOrgaos;
+        document.getElementById('t-imp').innerText = impedimentosOrgaos;
         document.getElementById('t-perc').innerText = totalOrgaos ? Math.round((auditadosOrgaos/totalOrgaos)*100) + '%' : '0%';
         document.getElementById('sub-p').innerText = `${totalPerfis} Perfis Mapeados`;
     }
@@ -195,12 +293,15 @@
         tbody.innerHTML = '';
         mastD.filter(i => i.fonte === nomeSec).forEach(o => {
             tbody.innerHTML += `<tr>
-                <td class="ps-4 text-start fw-bold small text-dark">${o.nome}</td>
+                <td class="ps-4 text-start fw-bold small text-dark">
+                    ${o.nome}
+                    ${o.observacoes ? `<button type="button" class="btn btn-link p-0 ms-1 text-warning" onclick="abrirObs('${o.uid}')" title="${o.observacoes}"><i class="fas fa-flag"></i></button>` : ''}
+                </td>
                 <td class="text-center">
                     ${o.igLink ? `<a href="${o.igLink}" target="_blank" class="social-active-ig mx-1 d-inline-block"><i class="fab fa-instagram fs-5"></i></a>` : `<i class="fab fa-instagram fs-5 social-disabled mx-1"></i>`}
                     ${o.fbLink ? `<a href="${o.fbLink}" target="_blank" class="social-active-fb mx-1 d-inline-block"><i class="fab fa-facebook fs-5"></i></a>` : `<i class="fab fa-facebook fs-5 social-disabled mx-1"></i>`}
                 </td>
-                <td class="text-center"><span class="status-badge ${o.isAuditado ? 'bg-ok' : 'bg-pend'}">${o.isAuditado ? 'Auditado' : 'Pendente'}</span></td>
+                <td class="text-center"><span class="status-badge ${o.isAuditado ? 'bg-ok' : (o.statusUpper === 'IMPEDIMENTO' ? 'bg-imp' : 'bg-pend')}">${o.isAuditado ? 'Auditado' : (o.statusUpper === 'IMPEDIMENTO' ? 'Impedimento' : 'Pendente')}</span></td>
                 <td class="text-center"><div class="d-flex align-items-center justify-content-center gap-2"><span class="fw-bold small">${o['Responsável'] || '---'}</span>${o.isAuditado ? `<button class="btn btn-ficha" onclick="abrirFicha('${o.uid}')"><i class="fas fa-id-card"></i></button>` : ''}</div></td>
             </tr>`;
         });
@@ -215,6 +316,15 @@
         campos.forEach(c => { if(d[c.k]) h += `<div class="mb-2"><label class="d-block text-muted fw-bold" style="font-size: 10px;">${c.l}</label><span class="fw-bold small">${d[c.k]}</span></div>`; });
         document.getElementById('corpoFicha').innerHTML = h;
         new bootstrap.Modal(document.getElementById('modalFicha')).show();
+    }
+
+    function abrirObs(uid) {
+        const d = mastD.find(i => i.uid === uid);
+        if (!d || !d.observacoes) return;
+        let h = `<h6 class="fw-bold text-primary text-uppercase border-bottom pb-2 mb-3">Observações: ${d.nome}</h6>`;
+        h += `<p class="mb-0 small text-dark">${d.observacoes}</p>`;
+        document.getElementById('corpoObs').innerHTML = h;
+        new bootstrap.Modal(document.getElementById('modalObs')).show();
     }
 
     window.onload = init;

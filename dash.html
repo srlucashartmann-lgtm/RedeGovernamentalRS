@@ -67,6 +67,7 @@
                 <canvas id="c1"></canvas>
                 <div class="mt-4 text-center">
                     <div class="small text-muted" id="sub-perfis">0 Perfis Mapeados (IG+FB)</div>
+                    <div class="small text-muted mt-1" id="sub-imped">0 Órgãos com impedimento</div>
                 </div>
             </div>
         </div>
@@ -102,6 +103,7 @@
         try {
             let totalOrgaos = 0;
             let auditadosOrgaos = 0;
+            let impedimentosOrgaos = 0;
             let totalPerfis = 0;
             let secStats = [];
 
@@ -116,8 +118,11 @@
                     const orgaoNome = row['Órgão'] || row['Orgão'];
                     if (orgaoNome && orgaoNome.trim() !== "") {
                         sTotal++;
-                        if ((row['Status'] || '').trim().toUpperCase() === 'AUDITADO') {
+                        const statusUpper = (row['Status'] || '').trim().toUpperCase();
+                        if (statusUpper === 'AUDITADO') {
                             sAudit++;
+                        } else if (statusUpper === 'IMPEDIMENTO') {
+                            impedimentosOrgaos++;
                         }
                         if (row['Instagram'] && row['Instagram'].length > 10) totalPerfis++;
                         if (row['Facebook'] && row['Facebook'].length > 10) totalPerfis++;
@@ -135,9 +140,11 @@
             await Promise.all(promises);
 
             const percGeral = totalOrgaos ? Math.round((auditadosOrgaos / totalOrgaos) * 100) : 0;
+            const pendentesOrgaos = totalOrgaos - auditadosOrgaos - impedimentosOrgaos;
             document.getElementById('p-perc').innerText = percGeral + "%";
             document.getElementById('p-bar').style.width = percGeral + "%";
             document.getElementById('sub-perfis').innerText = `${totalPerfis} Perfis Mapeados (IG+FB)`;
+            document.getElementById('sub-imped').innerText = `${impedimentosOrgaos} Órgãos com impedimento`;
 
             // Estimativa baseada em volume restante
             const faltam = totalOrgaos - auditadosOrgaos;
@@ -147,10 +154,10 @@
             new Chart(document.getElementById('c1'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Auditados', 'Pendentes'],
+                    labels: ['Auditados', 'Pendentes', 'Impedimentos'],
                     datasets: [{
-                        data: [auditadosOrgaos, totalOrgaos - auditadosOrgaos],
-                        backgroundColor: ['#10b981', '#f1f5f9'],
+                        data: [auditadosOrgaos, pendentesOrgaos < 0 ? 0 : pendentesOrgaos, impedimentosOrgaos],
+                        backgroundColor: ['#10b981', '#f1f5f9', '#f97316'],
                         borderWidth: 0
                     }]
                 },
