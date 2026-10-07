@@ -62,6 +62,8 @@
         .chart-donut { position: relative; height: 320px; }
         .chart-bars { position: relative; height: 480px; }
         .chart-grupos { position: relative; height: 820px; }
+        .aviso-pasta { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; margin-bottom: 1.25rem; border-radius: 12px; background: var(--imp-soft); border: 1px solid #fde68a; color: var(--imp-ink); font-size: 0.875rem; font-weight: 600; }
+        .aviso-pasta[hidden] { display: none; }
         .stat-list { margin-top: auto; padding-top: 1.25rem; display: grid; gap: 0.5rem; }
         .stat-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 0.8rem; border-radius: 12px; background: #f8fafc; font-size: 0.875rem; font-weight: 600; color: var(--ink-2); }
         .stat-chip { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 0.75rem; flex-shrink: 0; }
@@ -152,10 +154,13 @@
                         <span class="chart-key" id="grupoQtd"></span>
                     </div>
                     <div class="chart-key">
-                        <span><i class="key-dot" style="background: var(--ok)"></i>Concluída</span>
-                        <span><i class="key-dot" style="background: var(--accent)"></i>Em aberto</span>
+                        <span><i class="key-dot" style="background: var(--ok)"></i>Auditado (dono identificado)</span>
+                        <span><i class="key-dot" style="background: #3b82f6"></i>Mapeado (dono a confirmar)</span>
                     </div>
                 </header>
+                <div class="aviso-pasta" id="grupoAviso" role="note" hidden>
+                    <i class="fas fa-triangle-exclamation"></i><span id="grupoAvisoTxt"></span>
+                </div>
                 <div class="chart-grupos"><canvas id="c3"></canvas></div>
             </section>
         </div>
@@ -168,17 +173,20 @@
     Chart.defaults.color = '#64748b';
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) Chart.defaults.animation = false;
 
-    // Escreve o percentual na ponta de cada barra do ranking
+    // Escreve o percentual na ponta de cada barra do ranking (em barras empilhadas, a soma)
     const valorNaPonta = {
         id: 'valorNaPonta',
         afterDatasetsDraw(chart) {
             const { ctx } = chart;
-            const valores = chart.data.datasets[0].data;
+            const datasets = chart.data.datasets;
             ctx.save();
             ctx.font = "700 12px 'Plus Jakarta Sans', sans-serif";
             ctx.fillStyle = '#334155';
             ctx.textBaseline = 'middle';
-            chart.getDatasetMeta(0).data.forEach((barra, i) => ctx.fillText(valores[i] + '%', barra.x + 8, barra.y));
+            chart.getDatasetMeta(datasets.length - 1).data.forEach((barra, i) => {
+                const total = datasets.reduce((acc, d) => acc + (d.data[i] || 0), 0);
+                ctx.fillText(total + '%', barra.x + 8, barra.y);
+            });
             ctx.restore();
         }
     };
@@ -198,19 +206,29 @@
     // Ranking da pasta dividida em grupos (Educação por CRE)
     function renderRankingGrupos(grupoStats) {
         const grupos = Object.entries(grupoStats)
-            .map(([nome, s]) => ({ nome, perc: Math.round((s.audit / s.total) * 100), total: s.total }))
-            .sort((a, b) => b.perc - a.perc);
+            .map(([nome, s]) => ({ nome, perc: Math.round((s.audit / s.total) * 100), percMap: Math.round((s.map / s.total) * 100), total: s.total }))
+            .sort((a, b) => (b.perc + b.percMap) - (a.perc + a.percMap) || b.perc - a.perc);
         if (!grupos.length) return;
         document.getElementById('cardGrupos').hidden = false;
+        const fonteGrupo = FONTES.find(f => f.grupo);
+        if (fonteGrupo && fonteGrupo.aviso) {
+            document.getElementById('grupoAvisoTxt').innerText = fonteGrupo.aviso;
+            document.getElementById('grupoAviso').hidden = false;
+        }
         document.getElementById('grupoQtd').innerText = `${grupos.length} CREs · ${grupos.reduce((acc, g) => acc + g.total, 0)} escolas`;
         new Chart(document.getElementById('c3'), {
             type: 'bar',
             data: {
                 labels: grupos.map(g => g.nome),
                 datasets: [{
-                    label: '% Concluído',
+                    label: 'Auditado',
                     data: grupos.map(g => g.perc),
-                    backgroundColor: grupos.map(g => g.perc === 100 ? '#10b981' : '#004a8e'),
+                    backgroundColor: '#10b981',
+                    maxBarThickness: 18
+                }, {
+                    label: 'Mapeado',
+                    data: grupos.map(g => g.percMap),
+                    backgroundColor: '#3b82f6',
                     borderRadius: 4,
                     maxBarThickness: 18
                 }]
@@ -221,11 +239,14 @@
                 layout: { padding: { right: 44 } },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { callbacks: { label: (ctx) => ` ${ctx.parsed.x}% concluído · ${grupos[ctx.dataIndex].total} escolas` } }
+                    tooltip: { callbacks: {
+                        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.x}%`,
+                        footer: (itens) => `${grupos[itens[0].dataIndex].total} escolas`
+                    } }
                 },
                 scales: {
-                    x: { max: 100, display: false, grid: { display: false } },
-                    y: { grid: { display: false }, border: { color: '#e2e8f0' }, ticks: { color: '#334155', font: { weight: 600 }, autoSkip: false } }
+                    x: { stacked: true, max: 100, display: false, grid: { display: false } },
+                    y: { stacked: true, grid: { display: false }, border: { color: '#e2e8f0' }, ticks: { color: '#334155', font: { weight: 600 }, autoSkip: false } }
                 }
             },
             plugins: [valorNaPonta]
@@ -249,7 +270,7 @@
         { nome: "Justiça", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=2097801446&single=true&output=csv" },
         { nome: "Logística e Transportes", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=1623053344&single=true&output=csv" },
         // Escolas (aba "Escolas v2"), divididas por CRE
-        { nome: "Educação", grupo: "CRE", url: "dados/escolas.csv" }
+        { nome: "Educação", grupo: "CRE", url: "dados/escolas.csv", aviso: "Os perfis das escolas no Facebook ainda não foram mapeados." }
     ];
 
     async function init() {
@@ -257,6 +278,7 @@
             let totalOrgaos = 0;
             let auditadosOrgaos = 0;
             let impedimentosOrgaos = 0;
+            let mapeadosOrgaos = 0;
             let totalPerfis = 0;
             let secStats = [];
             const grupoStats = {};
@@ -277,14 +299,18 @@
                             sAudit++;
                         } else if (statusUpper === 'IMPEDIMENTO') {
                             impedimentosOrgaos++;
+                        } else if (statusUpper === 'MAPEADO') {
+                            // Perfil encontrado, mas o dono ainda não foi identificado
+                            mapeadosOrgaos++;
                         }
                         if (row['Instagram'] && row['Instagram'].length > 10) totalPerfis++;
                         if (row['Facebook'] && row['Facebook'].length > 10) totalPerfis++;
                         if (f.grupo) {
                             const g = row[f.grupo] || 'Sem ' + f.grupo;
-                            grupoStats[g] = grupoStats[g] || { total: 0, audit: 0 };
+                            grupoStats[g] = grupoStats[g] || { total: 0, audit: 0, map: 0 };
                             grupoStats[g].total++;
                             if (statusUpper === 'AUDITADO') grupoStats[g].audit++;
+                            if (statusUpper === 'MAPEADO') grupoStats[g].map++;
                         }
                     }
                 });
@@ -300,7 +326,7 @@
             await Promise.all(promises);
 
             const percGeral = totalOrgaos ? Math.round((auditadosOrgaos / totalOrgaos) * 100) : 0;
-            const pendentesOrgaos = totalOrgaos - auditadosOrgaos - impedimentosOrgaos;
+            const pendentesOrgaos = totalOrgaos - auditadosOrgaos - impedimentosOrgaos - mapeadosOrgaos;
             document.getElementById('p-perc').innerText = percGeral + "%";
             document.getElementById('p-bar').style.width = percGeral + "%";
             document.getElementById('sub-perfis').innerText = `${totalPerfis} Perfis Mapeados (IG+FB)`;
@@ -311,10 +337,10 @@
             new Chart(document.getElementById('c1'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Auditados', 'Pendentes', 'Impedimentos'],
+                    labels: ['Auditados', 'Mapeados', 'Pendentes', 'Impedimentos'],
                     datasets: [{
-                        data: [auditadosOrgaos, pendentesOrgaos < 0 ? 0 : pendentesOrgaos, impedimentosOrgaos],
-                        backgroundColor: ['#10b981', '#e11d48', '#f59e0b'],
+                        data: [auditadosOrgaos, mapeadosOrgaos, pendentesOrgaos < 0 ? 0 : pendentesOrgaos, impedimentosOrgaos],
+                        backgroundColor: ['#10b981', '#3b82f6', '#e11d48', '#f59e0b'],
                         borderColor: '#ffffff',
                         borderWidth: 2,
                         hoverOffset: 6
