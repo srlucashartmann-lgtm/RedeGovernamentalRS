@@ -3,160 +3,269 @@
 <head>
     <script>if (sessionStorage.getItem('adm_auth') !== 'true') window.location.href = 'index.html';</script>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalhes | Auditoria Social RS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0f172a; --accent: #004a8e; --success: #198754; --danger: #dc3545; --bg: #f4f7f9; }
-        body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: #334155; min-height: 100vh; display: flex; flex-direction: column; }
-        .navbar { background: var(--primary); border-bottom: 4px solid #f9d616; padding: 1rem 0; }
-        .kpi-card {
-            background: white;
-            border: none;
-            border-radius: 16px;
-            padding: 1.1rem 1.2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            border: 1px solid #edf2f7;
-            display: flex;
-            align-items: center;
-            gap: 0.9rem;
+        :root {
+            --primary: #0f172a; --primary-2: #1e293b; --gold: #f9d616; --accent: #004a8e;
+            --bg: #f4f7fb; --surface: #ffffff; --border: #e2e8f0;
+            --ink: #0f172a; --ink-2: #334155; --muted: #64748b;
+            --ok: #10b981; --ok-ink: #047857; --ok-soft: #ecfdf5;
+            --pend: #e11d48; --pend-ink: #be123c; --pend-soft: #fff1f2;
+            --imp: #f59e0b; --imp-ink: #b45309; --imp-soft: #fffbeb;
         }
-        .kpi-total { background: #e0f2fe; }
-        .kpi-audit { background: #ecfdf3; }
-        .kpi-pend { background: #fef2f2; }
-        .kpi-imp { background: #fffbeb; }
-        .kpi-prog { background: var(--primary); color: #fff; }
-        .kpi-prog .stat-label { color: #cbd5f5; }
-        .kpi-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(15,23,42,0.08);
-            color: var(--primary);
-            flex-shrink: 0;
+        body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--ink-2); min-height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+        .fw-800 { font-weight: 800; }
+        .text-accent { color: var(--accent); }
+        :focus-visible { outline: 3px solid rgba(0,74,142,0.45); outline-offset: 2px; }
+
+        /* Navegação (mesma estrutura em todas as páginas internas) */
+        .app-nav { background: var(--primary); border-bottom: 4px solid var(--gold); }
+        .app-nav .container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .app-nav :focus-visible { outline-color: var(--gold); }
+        .brand { display: inline-flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; font-weight: 800; font-size: 1.15rem; letter-spacing: 0.02em; }
+        .brand:hover { color: #fff; }
+        .brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--gold); color: var(--primary); display: grid; place-items: center; font-size: 0.95rem; }
+        .brand-rs { color: var(--gold); }
+        .nav-pills-app { display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 999px; background: rgba(255,255,255,0.08); }
+        .nav-pills-app a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 999px; color: rgba(255,255,255,0.78); font-weight: 600; font-size: 0.875rem; text-decoration: none; transition: background-color 0.2s, color 0.2s; }
+        .nav-pills-app a:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .nav-pills-app a.active { background: var(--gold); color: var(--primary); }
+        .btn-nav-icon { width: 40px; height: 40px; display: inline-grid; place-items: center; border-radius: 999px; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: #fff; transition: background-color 0.2s; }
+        .btn-nav-icon:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        @media (max-width: 575.98px) {
+            .nav-pills-app { order: 3; width: 100%; }
+            .nav-pills-app a { flex: 1; justify-content: center; }
         }
-        .kpi-total .kpi-icon { background: rgba(37,99,235,0.14); color: #1d4ed8; }
-        .kpi-audit .kpi-icon { background: rgba(22,163,74,0.14); color: #15803d; }
-        .kpi-pend .kpi-icon { background: rgba(220,38,38,0.14); color: #b91c1c; }
-        .kpi-imp .kpi-icon { background: rgba(245,158,11,0.18); color: #b45309; }
-        .kpi-prog .kpi-icon { background: rgba(15,23,42,0.32); color: #e5e7eb; }
-        .stat-val { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
-        .stat-label { font-size: 0.65rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-        .sec-card { background: white; border-radius: 15px; padding: 1.2rem; transition: 0.3s; cursor: pointer; border: 1px solid #edf2f7; height: 100%; position: relative; }
-        .sec-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .status-full { border-top: 5px solid var(--success) !important; background-color: #f0fdf4; }
-        .details-container { background: white; border-radius: 20px; overflow: hidden; display: none; box-shadow: 0 25px 50px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        .status-badge { padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 0.6rem; text-transform: uppercase; }
-        .bg-ok { background: #d1e7dd; color: var(--success); }
-        .bg-pend { background: #f8d7da; color: var(--danger); }
-        .bg-imp { background: #f97316; color: #fff; }
-        .social-active-ig { color: #E1306C; transition: 0.2s; }
-        .social-active-fb { color: #1877F2; transition: 0.2s; }
-        .social-active-ig:hover, .social-active-fb:hover { opacity: 0.7; transform: scale(1.1); }
-        .social-disabled { color: #cbd5e1; opacity: 0.2; }
-        .btn-ficha { border: none; background: #f1f5f9; color: var(--accent); padding: 4px 10px; border-radius: 8px; }
-        .btn-copy-list { position: absolute; top: 12px; right: 12px; border: none; background: #e2e8f0; color: #475569; padding: 5px 10px; border-radius: 8px; font-size: 0.8rem; transition: 0.2s; z-index: 5; }
-        .btn-copy-list:hover { background: #25d366; color: white; }
-        #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        /* Cabeçalho da página */
+        .page-head { margin-bottom: 1.25rem; }
+        .eyebrow { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.15rem; }
+        .page-title { font-size: clamp(1.4rem, 2.4vw, 1.75rem); font-weight: 800; color: var(--ink); margin: 0; }
+
+        /* Indicadores */
+        .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1rem 1.1rem; box-shadow: 0 1px 3px rgba(15,23,42,0.05); height: 100%; display: flex; flex-direction: column; gap: 0.65rem; }
+        .kpi-top { display: flex; align-items: center; gap: 0.6rem; }
+        .kpi-icon { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-size: 0.85rem; flex-shrink: 0; }
+        .kpi-total .kpi-icon { background: #eef4fb; color: var(--accent); }
+        .kpi-audit .kpi-icon { background: var(--ok-soft); color: var(--ok-ink); }
+        .kpi-pend .kpi-icon { background: var(--pend-soft); color: var(--pend-ink); }
+        .kpi-imp .kpi-icon { background: var(--imp-soft); color: var(--imp-ink); }
+        .kpi-prog { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); border-color: var(--primary); color: #fff; }
+        .kpi-prog .kpi-icon { background: rgba(249,214,22,0.15); color: var(--gold); }
+        .kpi-prog .stat-label { color: rgba(255,255,255,0.65); }
+        .kpi-prog .stat-val { color: #fff; font-size: 2.25rem; }
+        .kpi-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.12); overflow: hidden; margin-top: auto; }
+        .kpi-bar span { display: block; height: 100%; width: 0; background: var(--gold); border-radius: 999px; transition: width 0.6s ease; }
+        .stat-val { font-size: 1.75rem; font-weight: 800; color: var(--ink); line-height: 1; }
+        .stat-label { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.25; }
+        .stat-sub { font-size: 0.75rem; font-weight: 500; color: var(--muted); }
+
+        /* Pastas */
+        .section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; margin-bottom: 1rem; }
+        .section-title { font-size: 1rem; font-weight: 800; color: var(--ink); margin: 0; }
+        .section-hint { font-size: 0.8rem; color: var(--muted); margin: 0; }
+        .sec-card { position: relative; height: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+        .sec-card:hover { transform: translateY(-2px); border-color: #b9cde3; box-shadow: 0 10px 20px rgba(15,23,42,0.06); }
+        .sec-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,74,142,0.15); }
+        .sec-main { display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; width: 100%; height: 100%; padding: 1rem; background: transparent; border: 0; border-radius: inherit; text-align: left; color: inherit; cursor: pointer; }
+        .sec-head { display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+        .sec-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #eef4fb; color: var(--accent); font-size: 1.05rem; flex-shrink: 0; }
+        .sec-name { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink); margin: 0; line-height: 1.3; }
+        .sec-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em; color: var(--muted); }
+        .sec-progress { height: 6px; border-radius: 999px; background: #edf2f7; overflow: hidden; }
+        .sec-progress span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+        .status-full { border-color: #a7f3d0; background: linear-gradient(180deg, var(--ok-soft) 0%, #fff 75%); }
+        .status-full .sec-icon { background: #d1fae5; color: var(--ok-ink); }
+        .status-full .sec-meta { color: var(--ok-ink); }
+        .status-full .sec-progress span { background: var(--ok); }
+        .btn-copy-list { position: absolute; top: 1.125rem; right: 1rem; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--border); background: #fff; color: var(--ink-2); border-radius: 10px; font-size: 0.85rem; transition: background-color 0.2s, color 0.2s, border-color 0.2s; z-index: 2; }
+        .btn-copy-list:hover { background: #25d366; border-color: #25d366; color: #fff; }
+
+        /* Tabela de unidades */
+        .details-container { background: var(--surface); border-radius: 20px; overflow: hidden; display: none; box-shadow: 0 20px 40px rgba(15,23,42,0.08); border: 1px solid var(--border); }
+        .details-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border); background: #f8fafc; }
+        .details-title { font-size: 1.1rem; font-weight: 800; color: var(--ink); margin: 0; }
+        .card-head-icon { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: #eef4fb; color: var(--accent); font-size: 0.85rem; flex-shrink: 0; }
+        .table-app { min-width: 760px; }
+        .table-app thead th { background: #fff; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding-top: 0.85rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .table-app tbody td { padding-top: 0.8rem; padding-bottom: 0.8rem; border-color: #f1f5f9; font-size: 0.875rem; }
+        .unit-name { font-weight: 700; color: var(--ink); }
+        .unit-sub { display: block; font-size: 0.75rem; font-weight: 500; color: var(--muted); margin-top: 0.1rem; }
+        .sec-detail { font-size: 0.72rem; font-weight: 600; color: var(--muted); margin-top: -0.5rem; }
+        .grupo-area { padding: 1.25rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); background: #fbfcfe; }
+        .grupo-area .sec-card.active { box-shadow: 0 0 0 3px rgba(0,74,142,0.15); }
+        .grupo-area .sec-icon { display: none; }
+        .grupo-area .sec-head { gap: 0.6rem; padding-right: 2.75rem; min-height: 36px; }
+        .grupo-area .sec-main { gap: 0.75rem; }
+        .grupo-titulo { display: flex; align-items: center; gap: 0.6rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 1rem; font-weight: 800; color: var(--ink); scroll-margin-top: 1rem; }
+        .tabela-vazia { padding: 2.5rem 1rem; text-align: center; font-weight: 600; color: var(--muted); }
+        .resp-name { font-weight: 600; color: var(--ink-2); }
+        .status-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 999px; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+        .status-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .bg-ok { background: var(--ok-soft); color: var(--ok-ink); }
+        .bg-pend { background: var(--pend-soft); color: var(--pend-ink); }
+        .bg-imp { background: var(--imp-soft); color: var(--imp-ink); }
+        .social-link { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; font-size: 1.15rem; margin: 0 0.1rem; transition: background-color 0.2s, transform 0.2s; }
+        .social-active-ig { color: #E1306C; }
+        .social-active-fb { color: #1877F2; }
+        .social-active-ig:hover { background: #fdf2f8; color: #E1306C; transform: scale(1.08); }
+        .social-active-fb:hover { background: #eff6ff; color: #1877F2; transform: scale(1.08); }
+        .social-disabled { color: #cbd5e1; }
+        .btn-obs { border: 0; background: var(--imp-soft); color: var(--imp-ink); width: 26px; height: 26px; border-radius: 8px; display: inline-grid; place-items: center; font-size: 0.75rem; margin-left: 0.4rem; vertical-align: middle; transition: background-color 0.2s; }
+        .btn-obs:hover { background: #fde68a; }
+        .btn-ficha { border: 1px solid var(--border); background: #fff; color: var(--accent); width: 34px; height: 34px; padding: 0; display: inline-grid; place-items: center; border-radius: 10px; flex-shrink: 0; transition: background-color 0.2s, border-color 0.2s; }
+        .btn-ficha:hover { background: #eef4fb; border-color: #b9cde3; color: var(--accent); }
+
+        /* Modais e avisos */
+        .modal-title-app { font-size: 0.9rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); padding-bottom: 0.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+        .ficha-row { display: flex; flex-direction: column; padding: 0.55rem 0; border-bottom: 1px dashed #e2e8f0; }
+        .ficha-row:last-child { border-bottom: 0; }
+        .ficha-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+        .ficha-val { font-size: 0.9rem; font-weight: 600; color: var(--ink); word-break: break-word; }
+        .app-toast { background: var(--primary); color: #fff; border-radius: 14px; box-shadow: 0 16px 40px rgba(15,23,42,0.25); }
+        .app-toast .toast-text { color: rgba(255,255,255,0.75); }
+        .toast-ok { color: var(--ok); }
+        .toast-info { color: #60a5fa; }
+        .toast-erro { color: #fb7185; }
+
+        /* Carregamento */
+        #loader { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; text-align: center; }
+        .loader-mark { width: 56px; height: 56px; border-radius: 16px; background: var(--primary); color: var(--gold); display: grid; place-items: center; font-size: 1.4rem; margin-bottom: 1.25rem; }
+        .loader-error-icon { color: var(--pend); font-size: 2rem; margin-bottom: 0.75rem; }
+
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
     </style>
 </head>
 <body>
 
-<div id="loader">
-    <div class="spinner-border text-primary mb-3"></div>
+<div id="loader" role="status" aria-live="polite">
+    <div class="loader-mark"><i class="fas fa-shield-halved"></i></div>
+    <div class="spinner-border text-accent mb-3"></div>
     <h6 class="fw-bold text-muted">Sincronizando Auditoria RS...</h6>
 </div>
 
-<nav class="navbar navbar-dark shadow-sm">
-    <div class="container d-flex justify-content-between align-items-center">
-        <a href="dash.html" class="btn btn-outline-light btn-sm rounded-pill px-3"><i class="fas fa-arrow-left me-1"></i> Painel</a>
-        <h5 class="text-white mb-0 fw-bold">Rede Governamental | Auditoria Social</h5>
-        <button onclick="location.reload()" class="btn btn-outline-light btn-sm rounded-pill px-3"><i class="fas fa-rotate-right"></i></button>
+<nav class="app-nav">
+    <div class="container">
+        <a href="dash.html" class="brand"><span class="brand-mark"><i class="fas fa-shield-halved"></i></span><span>OPERACIONAL <span class="brand-rs">RS</span></span></a>
+        <div class="nav-pills-app" aria-label="Páginas">
+            <a href="dash.html"><i class="fas fa-chart-pie"></i>Painel</a>
+            <a href="detalhes.html" class="active" aria-current="page"><i class="fas fa-table-list"></i>Ver detalhes</a>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="location.reload()" class="btn-nav-icon" title="Atualizar dados" aria-label="Atualizar dados"><i class="fas fa-rotate-right"></i></button>
+            <button onclick="sessionStorage.clear(); location.reload();" class="btn-nav-icon" title="Sair" aria-label="Sair"><i class="fas fa-right-from-bracket"></i></button>
+        </div>
     </div>
 </nav>
 
-<div class="container py-4">
-    <div class="row g-3 mb-2 text-center">
-        <div class="col-md-4">
-            <div class="kpi-card kpi-total">
-                <div class="kpi-icon"><i class="fas fa-building"></i></div>
-                <div class="text-start flex-grow-1">
-                    <div class="stat-label">Total de Órgãos</div>
-                    <div id="t-p" class="stat-val mt-1">0</div>
-                    <small class="text-muted" style="font-size: 10px;" id="sub-p">0 Perfis Mapeados</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="kpi-card kpi-audit">
-                <div class="kpi-icon"><i class="fas fa-circle-check"></i></div>
-                <div class="text-start flex-grow-1">
-                    <div class="stat-label">Órgãos Auditados</div>
-                    <div id="t-o" class="stat-val mt-1">0</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="kpi-card kpi-pend">
-                <div class="kpi-icon"><i class="fas fa-clock"></i></div>
-                <div class="text-start flex-grow-1">
-                    <div class="stat-label">Órgãos Pendentes</div>
-                    <div id="t-pe" class="stat-val mt-1">0</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row g-3 mb-4 text-center">
-        <div class="col-md-6">
-            <div class="kpi-card kpi-imp">
-                <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
-                <div class="text-start flex-grow-1">
-                    <div class="stat-label">Órgãos com Impedimento</div>
-                    <div id="t-imp" class="stat-val mt-1">0</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
+<main class="container py-4">
+    <header class="page-head">
+        <span class="eyebrow">Rede Governamental</span>
+        <h1 class="page-title">Auditoria Social</h1>
+    </header>
+
+    <section class="row g-3 mb-4" aria-label="Indicadores gerais">
+        <div class="col-12 col-xl-4">
             <div class="kpi-card kpi-prog">
-                <div class="kpi-icon"><i class="fas fa-gauge-high"></i></div>
-                <div class="text-start flex-grow-1">
-                    <div class="stat-label text-white-50">Progresso Geral</div>
-                    <div id="t-perc" class="stat-val mt-1 text-white">0%</div>
+                <div class="kpi-top">
+                    <div class="kpi-icon"><i class="fas fa-gauge-high"></i></div>
+                    <div class="stat-label">Progresso Geral</div>
                 </div>
+                <div id="t-perc" class="stat-val">0%</div>
+                <div class="kpi-bar" aria-hidden="true"><span id="t-perc-bar"></span></div>
             </div>
         </div>
-    </div>
-
-    <div class="row g-3 mb-5" id="gridSecretarias"></div>
-
-    <div id="sectionDetalhes" class="details-container mb-5">
-        <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-light">
-            <h5 class="mb-0 fw-bold" id="nomeSecTxt">Unidades</h5>
-            <button class="btn btn-sm btn-dark rounded-pill px-4" onclick="document.getElementById('sectionDetalhes').style.display='none'">FECHAR</button>
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="kpi-card kpi-total">
+                <div class="kpi-top">
+                    <div class="kpi-icon"><i class="fas fa-building"></i></div>
+                    <div class="stat-label">Total de Órgãos</div>
+                </div>
+                <div id="t-p" class="stat-val">0</div>
+                <small class="stat-sub" id="sub-p">0 Perfis Mapeados</small>
+            </div>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 text-center">
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="kpi-card kpi-audit">
+                <div class="kpi-top">
+                    <div class="kpi-icon"><i class="fas fa-circle-check"></i></div>
+                    <div class="stat-label">Órgãos Auditados</div>
+                </div>
+                <div id="t-o" class="stat-val">0</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="kpi-card kpi-pend">
+                <div class="kpi-top">
+                    <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+                    <div class="stat-label">Órgãos Pendentes</div>
+                </div>
+                <div id="t-pe" class="stat-val">0</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <div class="kpi-card kpi-imp">
+                <div class="kpi-top">
+                    <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                    <div class="stat-label">Órgãos com Impedimento</div>
+                </div>
+                <div id="t-imp" class="stat-val">0</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-head">
+        <h2 class="section-title">Pastas</h2>
+        <p class="section-hint">Clique em uma pasta para ver as unidades · <i class="fas fa-clipboard mx-1"></i> copia a lista de pendentes</p>
+    </div>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3 mb-5" id="gridSecretarias"></div>
+
+    <section id="sectionDetalhes" class="details-container mb-5">
+        <div class="details-head">
+            <div class="d-flex align-items-center gap-2">
+                <span class="card-head-icon"><i class="fas fa-folder-open"></i></span>
+                <h2 class="details-title" id="nomeSecTxt">Unidades</h2>
+            </div>
+            <button class="btn btn-sm btn-dark rounded-pill px-3" onclick="fecharDetalhes()"><i class="fas fa-xmark me-1"></i>FECHAR</button>
+        </div>
+        <div id="grupoArea" class="grupo-area" style="display: none;">
+            <div class="section-head">
+                <h3 class="section-title">Coordenadorias Regionais <span class="text-muted fw-semibold" id="grupoRotulo"></span></h3>
+                <p class="section-hint">Clique em uma CRE para ver as escolas · <i class="fas fa-clipboard mx-1"></i> copia os pendentes da CRE</p>
+            </div>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3" id="gridGrupos"></div>
+        </div>
+        <div id="grupoTitulo" class="grupo-titulo" style="display: none;">
+            <span class="card-head-icon"><i class="fas fa-school"></i></span>
+            <span id="nomeGrupoTxt"></span>
+        </div>
+        <div id="tabelaVazia" class="tabela-vazia" style="display: none;">
+            <i class="fas fa-arrow-up me-2"></i>Selecione uma CRE para ver as escolas.
+        </div>
+        <div class="table-responsive" id="tabelaWrap">
+            <table class="table table-hover align-middle mb-0 table-app">
                 <thead>
-                    <tr><th class="text-start ps-4">Unidade</th><th>Links das Redes</th><th>Status</th><th>Responsável / Ficha</th></tr>
+                    <tr><th class="text-start ps-4">Unidade</th><th class="text-center">Links das Redes</th><th class="text-center">Status</th><th class="text-start pe-4">Responsável / Ficha</th></tr>
                 </thead>
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
-    </div>
-</div>
+    </section>
+</main>
 
-<div class="modal fade" id="modalCopiado" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 text-center">
-            <div class="modal-body p-4">
-                <i class="fas fa-circle-check text-success fs-1 mb-3"></i>
-                <h6 class="fw-800">Copiado com sucesso!</h6>
-                <p class="small text-muted mb-0">A lista de órgãos pendentes já está na sua área de transferência.</p>
+<div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3">
+    <div id="toastAviso" class="toast app-toast border-0" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="2500">
+        <div class="d-flex align-items-start gap-3 p-3">
+            <i id="toastIcon" class="fas fa-circle-check toast-ok fs-5 mt-1"></i>
+            <div class="flex-grow-1">
+                <div class="fw-800" id="toastTitulo">Copiado com sucesso!</div>
+                <div class="small toast-text" id="toastTexto">A lista de órgãos pendentes já está na sua área de transferência.</div>
             </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Fechar"></button>
         </div>
     </div>
 </div>
@@ -195,7 +304,9 @@
         { nome: "Fazenda", icon: "fas fa-landmark", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=999891661&single=true&output=csv" },
         { nome: "Desenvolvimento Econômico", icon: "fas fa-chart-line", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=108826985&single=true&output=csv" },
         { nome: "Justiça", icon: "fas fa-gavel", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=2097801446&single=true&output=csv" },
-        { nome: "Logística e Transportes", icon: "fas fa-truck", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=1623053344&single=true&output=csv" }
+        { nome: "Logística e Transportes", icon: "fas fa-truck", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=1623053344&single=true&output=csv" },
+        // Escolas (aba "Escolas v2"), divididas por CRE
+        { nome: "Educação", icon: "fas fa-graduation-cap", grupo: "CRE", url: "dados/escolas.csv" }
     ];
 
     let mastD = [];
@@ -219,6 +330,7 @@
                         igLink: row['Instagram'] && row['Instagram'].length > 10 ? row['Instagram'] : null,
                         fbLink: row['Facebook'] && row['Facebook'].length > 10 ? row['Facebook'] : null,
                         fonte: f.nome,
+                        grupo: f.grupo ? (row[f.grupo] || 'Sem ' + f.grupo) : null,
                         icon: f.icon
                     };
                 }).filter(i => i.nome);
@@ -227,7 +339,19 @@
             renderHub();
             updateKPIs();
             document.getElementById('loader').style.display = 'none';
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error(e); mostrarErroCarregamento(); }
+    }
+
+    function mostrarErroCarregamento() {
+        // Aberto direto do disco (file://), o Google bloqueia a leitura das planilhas (CORS)
+        const dica = location.protocol === 'file:'
+            ? 'A página foi aberta direto do computador e o Google bloqueia esse acesso. Abra pelo servidor local (npm run dev) ou pelo site publicado.'
+            : 'Verifique sua conexão e tente novamente.';
+        document.getElementById('loader').innerHTML = `
+            <i class="fas fa-triangle-exclamation loader-error-icon"></i>
+            <h6 class="fw-bold mb-1">Não foi possível carregar os dados</h6>
+            <p class="small text-muted mb-3" style="max-width: 420px;">${dica}</p>
+            <button class="btn btn-dark rounded-pill px-4" onclick="location.reload()"><i class="fas fa-rotate-right me-2"></i>Tentar novamente</button>`;
     }
 
     function updateKPIs() {
@@ -242,78 +366,167 @@
         document.getElementById('t-imp').innerText = impedimentosOrgaos;
         document.getElementById('t-perc').innerText = totalOrgaos ? Math.round((auditadosOrgaos/totalOrgaos)*100) + '%' : '0%';
         document.getElementById('sub-p').innerText = `${totalPerfis} Perfis Mapeados`;
+        document.getElementById('t-perc-bar').style.width = document.getElementById('t-perc').innerText;
+    }
+
+    // Card com progresso, usado para as pastas e para os grupos (CREs)
+    function cardProgresso({ chave, icone, titulo, perc, detalhe, abrir, copiar }) {
+        return `
+                <div class="col">
+                    <div class="sec-card ${perc===100?'status-full':''}" data-sec="${chave}">
+                        <button type="button" class="sec-main" onclick="${abrir}">
+                            <span class="sec-head">
+                                <span class="sec-icon"><i class="${icone}"></i></span>
+                                <span class="sec-name">${titulo}</span>
+                                ${detalhe ? `<span class="sec-detail">${detalhe}</span>` : ''}
+                            </span>
+                            <span class="d-block w-100">
+                                <span class="sec-meta">
+                                    <span>${perc}% AUDITADO</span>
+                                    ${perc===100 ? '<i class="fas fa-circle-check" aria-hidden="true"></i>' : ''}
+                                </span>
+                                <span class="sec-progress d-block" aria-hidden="true"><span style="width: ${perc}%"></span></span>
+                            </span>
+                        </button>
+                        <button type="button" class="btn-copy-list" onclick="${copiar}" title="Copiar Pendentes" aria-label="Copiar Pendentes">
+                            <i class="fas fa-clipboard"></i>
+                        </button>
+                    </div>
+                </div>`;
     }
 
     function renderHub() {
         const grid = document.getElementById('gridSecretarias');
-        grid.innerHTML = '';
-        FONTES.forEach(f => {
+        grid.innerHTML = FONTES.map(f => {
             const organs = mastD.filter(i => i.fonte === f.nome);
-            if (!organs.length) return;
+            if (!organs.length) return '';
             const aAcc = organs.filter(o => o.isAuditado).length;
             const perc = Math.round((aAcc/organs.length)*100);
-            grid.innerHTML += `
-                <div class="col-md-3">
-                    <div class="sec-card ${perc===100?'status-full':''}" onclick="ver('${f.nome}')">
-                        <button class="btn-copy-list" onclick="copiarRelatorio('${f.nome}', event)" title="Copiar Pendentes">
-                            <i class="fas fa-clipboard"></i>
-                        </button>
-                        <div class="d-flex align-items-center">
-                            <i class="${f.icon} fs-4 me-3"></i>
-                            <div>
-                                <h6 class="fw-bold mb-0 small text-uppercase pe-4">${f.nome}</h6>
-                                <small class="text-muted fw-bold">${perc}% AUDITADO</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-        });
+            const detalhe = f.grupo ? `${organs.length} unidades · ${new Set(organs.map(o => o.grupo)).size} ${f.grupo}s` : '';
+            return cardProgresso({ chave: f.nome, icone: f.icon, titulo: f.nome, perc, detalhe, abrir: `ver('${f.nome}')`, copiar: `copiarRelatorio('${f.nome}', event)` });
+        }).join('');
     }
 
     function copiarRelatorio(nomeSec, event) {
         event.stopPropagation();
-        const pendentes = mastD.filter(o => o.fonte === nomeSec && !o.isAuditado);
+        copiarPendentes(nomeSec, mastD.filter(o => o.fonte === nomeSec && !o.isAuditado), 'Não há órgãos pendentes nesta secretaria!');
+    }
+
+    function copiarRelatorioGrupo(idx, event) {
+        event.stopPropagation();
+        const g = grupoAtual.nomes[idx];
+        copiarPendentes(g, mastD.filter(o => o.fonte === grupoAtual.sec && o.grupo === g && !o.isAuditado), `Não há órgãos pendentes na ${g}!`);
+    }
+
+    function copiarPendentes(rotulo, pendentes, textoVazio) {
         if (pendentes.length === 0) {
-            alert("Não há órgãos pendentes nesta secretaria!");
+            mostrarAviso('info', 'Nada para copiar', textoVazio);
             return;
         }
         const lista = pendentes.map(p => `- ${p.nome}`).join('\n');
-        const texto = `Olá! Segue a lista de órgãos da ${nomeSec} que ainda não preencheram a auditoria de redes:\n\n${lista}\n\nFavor realizar o preenchimento o quanto antes!`;
-        
-        navigator.clipboard.writeText(texto).then(() => {
-            const m = new bootstrap.Modal(document.getElementById('modalCopiado'));
-            m.show();
-            setTimeout(() => m.hide(), 2500);
-        });
+        const texto = `Olá! Segue a lista de órgãos da ${rotulo} que ainda não preencheram a auditoria de redes:\n\n${lista}\n\nFavor realizar o preenchimento o quanto antes!`;
+
+        navigator.clipboard.writeText(texto)
+            .then(() => mostrarAviso('ok', 'Copiado com sucesso!', 'A lista de órgãos pendentes já está na sua área de transferência.'))
+            .catch(() => mostrarAviso('erro', 'Não foi possível copiar', 'O navegador bloqueou o acesso à área de transferência.'));
     }
 
+    function mostrarAviso(tipo, titulo, texto) {
+        const icones = { ok: 'fa-circle-check toast-ok', info: 'fa-circle-info toast-info', erro: 'fa-circle-xmark toast-erro' };
+        document.getElementById('toastIcon').className = `fas ${icones[tipo]} fs-5 mt-1`;
+        document.getElementById('toastTitulo').innerText = titulo;
+        document.getElementById('toastTexto').innerText = texto;
+        bootstrap.Toast.getOrCreateInstance(document.getElementById('toastAviso')).show();
+    }
+
+    function marcarAtivo(gridId, chave) {
+        document.querySelectorAll(`#${gridId} .sec-card`).forEach(c => c.classList.toggle('active', c.dataset.sec === chave));
+    }
+
+    function marcarPastaAtiva(nomeSec) {
+        marcarAtivo('gridSecretarias', nomeSec);
+    }
+
+    function fecharDetalhes() {
+        document.getElementById('sectionDetalhes').style.display = 'none';
+        marcarPastaAtiva(null);
+    }
+
+    // Pasta aberta que é dividida em grupos (ex.: Educação por CRE)
+    let grupoAtual = { sec: null, nomes: [] };
+
     function ver(nomeSec) {
+        marcarPastaAtiva(nomeSec);
         document.getElementById('nomeSecTxt').innerText = "Pasta: " + nomeSec;
-        const tbody = document.getElementById('corpoTabela');
-        tbody.innerHTML = '';
-        mastD.filter(i => i.fonte === nomeSec).forEach(o => {
-            tbody.innerHTML += `<tr>
-                <td class="ps-4 text-start fw-bold small text-dark">
-                    ${o.nome}
-                    ${o.observacoes ? `<button type="button" class="btn btn-link p-0 ms-1 text-warning" onclick="abrirObs('${o.uid}')" title="${o.observacoes}"><i class="fas fa-flag"></i></button>` : ''}
-                </td>
-                <td class="text-center">
-                    ${o.igLink ? `<a href="${o.igLink}" target="_blank" class="social-active-ig mx-1 d-inline-block"><i class="fab fa-instagram fs-5"></i></a>` : `<i class="fab fa-instagram fs-5 social-disabled mx-1"></i>`}
-                    ${o.fbLink ? `<a href="${o.fbLink}" target="_blank" class="social-active-fb mx-1 d-inline-block"><i class="fab fa-facebook fs-5"></i></a>` : `<i class="fab fa-facebook fs-5 social-disabled mx-1"></i>`}
-                </td>
-                <td class="text-center"><span class="status-badge ${o.isAuditado ? 'bg-ok' : (o.statusUpper === 'IMPEDIMENTO' ? 'bg-imp' : 'bg-pend')}">${o.isAuditado ? 'Auditado' : (o.statusUpper === 'IMPEDIMENTO' ? 'Impedimento' : 'Pendente')}</span></td>
-                <td class="text-center"><div class="d-flex align-items-center justify-content-center gap-2"><span class="fw-bold small">${o['Responsável'] || '---'}</span>${o.isAuditado ? `<button class="btn btn-ficha" onclick="abrirFicha('${o.uid}')"><i class="fas fa-id-card"></i></button>` : ''}</div></td>
-            </tr>`;
-        });
+        const fonte = FONTES.find(f => f.nome === nomeSec);
+        const temGrupo = Boolean(fonte && fonte.grupo);
+        document.getElementById('grupoArea').style.display = temGrupo ? 'block' : 'none';
+        document.getElementById('grupoTitulo').style.display = 'none';
+        if (temGrupo) {
+            renderGrupos(nomeSec, fonte.grupo);
+            mostrarTabela(null);
+        } else {
+            mostrarTabela(mastD.filter(i => i.fonte === nomeSec));
+        }
         document.getElementById('sectionDetalhes').style.display = 'block';
         window.scrollTo({ top: document.getElementById('sectionDetalhes').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function renderGrupos(nomeSec, rotuloGrupo) {
+        const itens = mastD.filter(i => i.fonte === nomeSec);
+        const nomes = [...new Set(itens.map(i => i.grupo))];
+        grupoAtual = { sec: nomeSec, nomes };
+        document.getElementById('grupoRotulo').innerText = `${nomes.length} ${rotuloGrupo}s`;
+        document.getElementById('gridGrupos').innerHTML = nomes.map((g, idx) => {
+            const doGrupo = itens.filter(i => i.grupo === g);
+            const perc = Math.round((doGrupo.filter(o => o.isAuditado).length / doGrupo.length) * 100);
+            return cardProgresso({ chave: g, icone: 'fas fa-school', titulo: g, perc, detalhe: `${doGrupo.length} unidades`, abrir: `verGrupo(${idx})`, copiar: `copiarRelatorioGrupo(${idx}, event)` });
+        }).join('');
+    }
+
+    function verGrupo(idx) {
+        const g = grupoAtual.nomes[idx];
+        marcarAtivo('gridGrupos', g);
+        document.getElementById('nomeGrupoTxt').innerText = g;
+        document.getElementById('grupoTitulo').style.display = 'flex';
+        mostrarTabela(mastD.filter(i => i.fonte === grupoAtual.sec && i.grupo === g));
+        document.getElementById('grupoTitulo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // lista = null mostra o aviso para escolher um grupo
+    function mostrarTabela(lista) {
+        document.getElementById('tabelaWrap').style.display = lista ? 'block' : 'none';
+        document.getElementById('tabelaVazia').style.display = lista ? 'none' : 'block';
+        document.getElementById('corpoTabela').innerHTML = (lista || []).map(linhaTabela).join('');
+    }
+
+    function rotuloStatus(o) {
+        if (o.isAuditado) return 'Auditado';
+        if (o.statusUpper === 'IMPEDIMENTO') return 'Impedimento';
+        return o.statusUpper === 'NÃO EXISTE' ? 'Não existe' : 'Pendente';
+    }
+
+    function linhaTabela(o) {
+        return `<tr>
+                <td class="ps-4 text-start">
+                    <span class="unit-name">${o.nome}</span>
+                    ${o.observacoes ? `<button type="button" class="btn-obs" onclick="abrirObs('${o.uid}')" title="${o.observacoes}" aria-label="Ver observações"><i class="fas fa-flag"></i></button>` : ''}
+                    ${o.grupo && o['Cidade'] ? `<span class="unit-sub">${o['Cidade']}</span>` : ''}
+                </td>
+                <td class="text-center text-nowrap">
+                    ${o.igLink ? `<a href="${o.igLink}" target="_blank" rel="noopener" class="social-link social-active-ig" title="Abrir Instagram" aria-label="Abrir Instagram"><i class="fab fa-instagram"></i></a>` : `<span class="social-link social-disabled" title="Sem Instagram"><i class="fab fa-instagram"></i></span>`}
+                    ${o.fbLink ? `<a href="${o.fbLink}" target="_blank" rel="noopener" class="social-link social-active-fb" title="Abrir Facebook" aria-label="Abrir Facebook"><i class="fab fa-facebook"></i></a>` : `<span class="social-link social-disabled" title="Sem Facebook"><i class="fab fa-facebook"></i></span>`}
+                </td>
+                <td class="text-center"><span class="status-badge ${o.isAuditado ? 'bg-ok' : (o.statusUpper === 'IMPEDIMENTO' ? 'bg-imp' : 'bg-pend')}">${rotuloStatus(o)}</span></td>
+                <td class="text-start pe-4"><div class="d-flex align-items-center justify-content-between gap-2"><span class="resp-name ${o['Responsável'] ? '' : 'text-muted'}">${o['Responsável'] || '---'}</span>${o.isAuditado ? `<button class="btn btn-ficha" onclick="abrirFicha('${o.uid}')" title="Ver ficha" aria-label="Ver ficha"><i class="fas fa-id-card"></i></button>` : ''}</div></td>
+            </tr>`;
     }
 
     function abrirFicha(uid) {
         const d = mastD.find(i => i.uid === uid);
         const campos = [{k:'Responsável',l:'Resp.'},{k:'ID Funcional',l:'ID'},{k:'E-mail',l:'E-mail'},{k:'Telefone',l:'Tel.'},{k:'Cidade',l:'Cidade'},{k:'Data e hora do preenchimento',l:'Data'}];
-        let h = `<h6 class="fw-bold text-primary text-uppercase border-bottom pb-2 mb-3">Ficha: ${d.nome}</h6>`;
-        campos.forEach(c => { if(d[c.k]) h += `<div class="mb-2"><label class="d-block text-muted fw-bold" style="font-size: 10px;">${c.l}</label><span class="fw-bold small">${d[c.k]}</span></div>`; });
+        let h = `<h6 class="modal-title-app">Ficha: ${d.nome}</h6>`;
+        campos.forEach(c => { if(d[c.k]) h += `<div class="ficha-row"><span class="ficha-label">${c.l}</span><span class="ficha-val">${d[c.k]}</span></div>`; });
         document.getElementById('corpoFicha').innerHTML = h;
         new bootstrap.Modal(document.getElementById('modalFicha')).show();
     }
@@ -321,8 +534,8 @@
     function abrirObs(uid) {
         const d = mastD.find(i => i.uid === uid);
         if (!d || !d.observacoes) return;
-        let h = `<h6 class="fw-bold text-primary text-uppercase border-bottom pb-2 mb-3">Observações: ${d.nome}</h6>`;
-        h += `<p class="mb-0 small text-dark">${d.observacoes}</p>`;
+        let h = `<h6 class="modal-title-app">Observações: ${d.nome}</h6>`;
+        h += `<p class="mb-0 text-dark" style="white-space: pre-line;">${d.observacoes}</p>`;
         document.getElementById('corpoObs').innerHTML = h;
         new bootstrap.Modal(document.getElementById('modalObs')).show();
     }

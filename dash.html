@@ -3,84 +3,235 @@
 <head>
     <script>if (sessionStorage.getItem('adm_auth') !== 'true') window.location.href = 'index.html';</script>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Performance RS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        :root { --primary: #0f172a; --gold: #f9d616; --bg: #f8fafc; --success: #10b981; }
-        body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; }
-        .navbar { background: var(--primary); border-bottom: 4px solid var(--gold); padding: 1rem 0; }
-        .hero-box { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 2rem; color: white; margin-bottom: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        .card-dash { background: white; border: none; border-radius: 20px; padding: 1.5rem; height: 100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .progress { height: 12px; border-radius: 6px; background-color: rgba(255,255,255,0.1); }
-        .progress-bar { background-color: var(--gold); border-radius: 6px; }
-        #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        :root {
+            --primary: #0f172a; --primary-2: #1e293b; --gold: #f9d616; --accent: #004a8e;
+            --bg: #f4f7fb; --surface: #ffffff; --border: #e2e8f0;
+            --ink: #0f172a; --ink-2: #334155; --muted: #64748b;
+            --ok: #10b981; --pend: #e11d48; --imp: #f59e0b; --imp-ink: #b45309; --imp-soft: #fffbeb;
+        }
+        body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--ink-2); -webkit-font-smoothing: antialiased; }
+        .fw-800 { font-weight: 800; }
+        .text-accent { color: var(--accent); }
+        :focus-visible { outline: 3px solid rgba(0,74,142,0.45); outline-offset: 2px; }
+
+        /* Navegação (mesma estrutura em todas as páginas internas) */
+        .app-nav { background: var(--primary); border-bottom: 4px solid var(--gold); }
+        .app-nav .container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .app-nav :focus-visible { outline-color: var(--gold); }
+        .brand { display: inline-flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; font-weight: 800; font-size: 1.15rem; letter-spacing: 0.02em; }
+        .brand:hover { color: #fff; }
+        .brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--gold); color: var(--primary); display: grid; place-items: center; font-size: 0.95rem; }
+        .brand-rs { color: var(--gold); }
+        .nav-pills-app { display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 999px; background: rgba(255,255,255,0.08); }
+        .nav-pills-app a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 999px; color: rgba(255,255,255,0.78); font-weight: 600; font-size: 0.875rem; text-decoration: none; transition: background-color 0.2s, color 0.2s; }
+        .nav-pills-app a:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .nav-pills-app a.active { background: var(--gold); color: var(--primary); }
+        .btn-nav-icon { width: 40px; height: 40px; display: inline-grid; place-items: center; border-radius: 999px; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: #fff; transition: background-color 0.2s; }
+        .btn-nav-icon:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        @media (max-width: 575.98px) {
+            .nav-pills-app { order: 3; width: 100%; }
+            .nav-pills-app a { flex: 1; justify-content: center; }
+        }
+
+        /* Destaque principal */
+        .hero-box { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); border-radius: 24px; padding: 2rem; color: #fff; margin-bottom: 1.5rem; box-shadow: 0 20px 25px -5px rgba(15,23,42,0.15); }
+        .hero-title { font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 800; margin-bottom: 0.35rem; }
+        .hero-sub { color: rgba(255,255,255,0.65); margin-bottom: 1.75rem; }
+        .hero-number { font-size: clamp(3rem, 7vw, 4.5rem); font-weight: 800; line-height: 0.9; letter-spacing: -0.02em; }
+        .hero-unit { color: rgba(255,255,255,0.65); font-weight: 600; padding-bottom: 0.4rem; }
+        .hero-progress { height: 12px; border-radius: 999px; background-color: rgba(255,255,255,0.12); }
+        .hero-progress .progress-bar { background-color: var(--gold); border-radius: 999px; transition: width 0.6s ease; }
+
+        /* Cartões de gráfico */
+        .card-dash { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; height: 100%; box-shadow: 0 1px 3px rgba(15,23,42,0.05); display: flex; flex-direction: column; }
+        .card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1.25rem; }
+        .card-head-title { display: flex; align-items: center; gap: 0.65rem; }
+        .card-head-icon { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: #eef4fb; color: var(--accent); font-size: 0.85rem; flex-shrink: 0; }
+        .card-title-sm { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); margin: 0; }
+        .chart-key { display: flex; gap: 1rem; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+        .chart-key span { display: inline-flex; align-items: center; gap: 0.4rem; }
+        .key-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .chart-donut { position: relative; height: 320px; }
+        .chart-bars { position: relative; height: 480px; }
+        .chart-grupos { position: relative; height: 820px; }
+        .stat-list { margin-top: auto; padding-top: 1.25rem; display: grid; gap: 0.5rem; }
+        .stat-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 0.8rem; border-radius: 12px; background: #f8fafc; font-size: 0.875rem; font-weight: 600; color: var(--ink-2); }
+        .stat-chip { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 0.75rem; flex-shrink: 0; }
+        .chip-accent { background: #eef4fb; color: var(--accent); }
+        .chip-imp { background: var(--imp-soft); color: var(--imp-ink); }
+
+        /* Carregamento */
+        #loader { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; text-align: center; }
+        .loader-mark { width: 56px; height: 56px; border-radius: 16px; background: var(--primary); color: var(--gold); display: grid; place-items: center; font-size: 1.4rem; margin-bottom: 1.25rem; }
+        .loader-error-icon { color: var(--pend); font-size: 2rem; margin-bottom: 0.75rem; }
+
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
     </style>
 </head>
 <body>
 
-<div id="loader">
-    <div class="spinner-border text-primary mb-3"></div>
+<div id="loader" role="status" aria-live="polite">
+    <div class="loader-mark"><i class="fas fa-shield-halved"></i></div>
+    <div class="spinner-border text-accent mb-3"></div>
     <h6 class="fw-bold text-muted">Consolidando Performance RS...</h6>
 </div>
 
-<nav class="navbar navbar-dark mb-4">
-    <div class="container d-flex justify-content-between align-items-center">
-        <span class="navbar-brand fw-800 fs-4">OPERACIONAL <span class="text-warning">RS</span></span>
-        <div class="d-flex gap-2">
-            <a href="detalhes.html" class="btn btn-warning fw-bold rounded-pill px-4">VER DETALHES</a>
-            <button onclick="sessionStorage.clear(); location.reload();" class="btn btn-outline-light rounded-pill"><i class="fas fa-right-from-bracket"></i></button>
+<nav class="app-nav mb-4">
+    <div class="container">
+        <a href="dash.html" class="brand"><span class="brand-mark"><i class="fas fa-shield-halved"></i></span><span>OPERACIONAL <span class="brand-rs">RS</span></span></a>
+        <div class="nav-pills-app" aria-label="Páginas">
+            <a href="dash.html" class="active" aria-current="page"><i class="fas fa-chart-pie"></i>Painel</a>
+            <a href="detalhes.html"><i class="fas fa-table-list"></i>Ver detalhes</a>
         </div>
+        <button onclick="sessionStorage.clear(); location.reload();" class="btn-nav-icon" title="Sair" aria-label="Sair"><i class="fas fa-right-from-bracket"></i></button>
     </div>
 </nav>
 
-<div class="container pb-5">
-    <div class="hero-box">
-        <div class="row align-items-center">
-            <div class="col-md-7">
-                <h1 class="fw-800 mb-2">Progresso da Auditoria</h1>
-                <p class="text-white-50 mb-4">Acompanhamento consolidado de todas as secretarias e órgãos mapeados.</p>
-                <div class="d-flex align-items-end gap-3 mb-2">
-                    <span class="display-4 fw-800" id="p-perc">0%</span>
-                    <span class="mb-2 text-white-50">concluído</span>
+<main class="container pb-5">
+    <section class="hero-box">
+        <div class="row g-4 align-items-end">
+            <div class="col-12">
+                <h1 class="hero-title">Progresso da Auditoria</h1>
+                <p class="hero-sub">Acompanhamento consolidado de todas as secretarias e órgãos mapeados.</p>
+                <div class="d-flex align-items-end gap-3 mb-3">
+                    <span class="hero-number" id="p-perc">0%</span>
+                    <span class="hero-unit">concluído</span>
                 </div>
-                <div class="progress mb-3">
-                    <div id="p-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
-                </div>
-            </div>
-            <div class="col-md-5 text-md-end">
-                <div class="p-3 bg-white bg-opacity-10 rounded-4 d-inline-block text-start">
-                    <div class="small text-white-50">Estimativa de Conclusão</div>
-                    <div class="h3 fw-800 mb-0"><span id="days">--</span> dias</div>
+                <div class="progress hero-progress">
+                    <div id="p-bar" class="progress-bar" role="progressbar" aria-label="Progresso da auditoria" style="width: 0%"></div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card-dash">
-                <h6 class="fw-bold text-muted mb-4 uppercase small">Status Geral (Órgãos)</h6>
-                <canvas id="c1"></canvas>
-                <div class="mt-4 text-center">
-                    <div class="small text-muted" id="sub-perfis">0 Perfis Mapeados (IG+FB)</div>
-                    <div class="small text-muted mt-1" id="sub-imped">0 Órgãos com impedimento</div>
+        <div class="col-lg-4">
+            <section class="card-dash">
+                <header class="card-head">
+                    <div class="card-head-title">
+                        <span class="card-head-icon"><i class="fas fa-chart-pie"></i></span>
+                        <h2 class="card-title-sm">Status Geral (Órgãos)</h2>
+                    </div>
+                </header>
+                <div class="chart-donut"><canvas id="c1"></canvas></div>
+                <div class="stat-list">
+                    <div class="stat-item"><span class="stat-chip chip-accent"><i class="fas fa-share-nodes"></i></span><span id="sub-perfis">0 Perfis Mapeados (IG+FB)</span></div>
+                    <div class="stat-item"><span class="stat-chip chip-imp"><i class="fas fa-triangle-exclamation"></i></span><span id="sub-imped">0 Órgãos com impedimento</span></div>
                 </div>
-            </div>
+            </section>
         </div>
-        <div class="col-md-8">
-            <div class="card-dash">
-                <h6 class="fw-bold text-muted mb-4 uppercase small">Ranking de Performance por Pasta</h6>
-                <canvas id="c2" height="150"></canvas>
-            </div>
+        <div class="col-lg-8">
+            <section class="card-dash">
+                <header class="card-head">
+                    <div class="card-head-title">
+                        <span class="card-head-icon"><i class="fas fa-ranking-star"></i></span>
+                        <h2 class="card-title-sm">Ranking de Performance por Pasta</h2>
+                    </div>
+                    <div class="chart-key">
+                        <span><i class="key-dot" style="background: var(--ok)"></i>Concluída</span>
+                        <span><i class="key-dot" style="background: var(--accent)"></i>Em aberto</span>
+                    </div>
+                </header>
+                <div class="chart-bars"><canvas id="c2"></canvas></div>
+            </section>
+        </div>
+        <div class="col-12" id="cardGrupos" hidden>
+            <section class="card-dash">
+                <header class="card-head">
+                    <div class="card-head-title">
+                        <span class="card-head-icon"><i class="fas fa-graduation-cap"></i></span>
+                        <h2 class="card-title-sm">Educação · Ranking por CRE</h2>
+                        <span class="chart-key" id="grupoQtd"></span>
+                    </div>
+                    <div class="chart-key">
+                        <span><i class="key-dot" style="background: var(--ok)"></i>Concluída</span>
+                        <span><i class="key-dot" style="background: var(--accent)"></i>Em aberto</span>
+                    </div>
+                </header>
+                <div class="chart-grupos"><canvas id="c3"></canvas></div>
+            </section>
         </div>
     </div>
-</div>
+</main>
 
 <script>
+    // Aparência padrão dos gráficos (somente visual)
+    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+    Chart.defaults.color = '#64748b';
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) Chart.defaults.animation = false;
+
+    // Escreve o percentual na ponta de cada barra do ranking
+    const valorNaPonta = {
+        id: 'valorNaPonta',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            const valores = chart.data.datasets[0].data;
+            ctx.save();
+            ctx.font = "700 12px 'Plus Jakarta Sans', sans-serif";
+            ctx.fillStyle = '#334155';
+            ctx.textBaseline = 'middle';
+            chart.getDatasetMeta(0).data.forEach((barra, i) => ctx.fillText(valores[i] + '%', barra.x + 8, barra.y));
+            ctx.restore();
+        }
+    };
+
+    function mostrarErroCarregamento() {
+        // Aberto direto do disco (file://), o Google bloqueia a leitura das planilhas (CORS)
+        const dica = location.protocol === 'file:'
+            ? 'A página foi aberta direto do computador e o Google bloqueia esse acesso. Abra pelo servidor local (npm run dev) ou pelo site publicado.'
+            : 'Verifique sua conexão e tente novamente.';
+        document.getElementById('loader').innerHTML = `
+            <i class="fas fa-triangle-exclamation loader-error-icon"></i>
+            <h6 class="fw-bold mb-1">Não foi possível carregar os dados</h6>
+            <p class="small text-muted mb-3" style="max-width: 420px;">${dica}</p>
+            <button class="btn btn-dark rounded-pill px-4" onclick="location.reload()"><i class="fas fa-rotate-right me-2"></i>Tentar novamente</button>`;
+    }
+
+    // Ranking da pasta dividida em grupos (Educação por CRE)
+    function renderRankingGrupos(grupoStats) {
+        const grupos = Object.entries(grupoStats)
+            .map(([nome, s]) => ({ nome, perc: Math.round((s.audit / s.total) * 100), total: s.total }))
+            .sort((a, b) => b.perc - a.perc);
+        if (!grupos.length) return;
+        document.getElementById('cardGrupos').hidden = false;
+        document.getElementById('grupoQtd').innerText = `${grupos.length} CREs · ${grupos.reduce((acc, g) => acc + g.total, 0)} escolas`;
+        new Chart(document.getElementById('c3'), {
+            type: 'bar',
+            data: {
+                labels: grupos.map(g => g.nome),
+                datasets: [{
+                    label: '% Concluído',
+                    data: grupos.map(g => g.perc),
+                    backgroundColor: grupos.map(g => g.perc === 100 ? '#10b981' : '#004a8e'),
+                    borderRadius: 4,
+                    maxBarThickness: 18
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                layout: { padding: { right: 44 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => ` ${ctx.parsed.x}% concluído · ${grupos[ctx.dataIndex].total} escolas` } }
+                },
+                scales: {
+                    x: { max: 100, display: false, grid: { display: false } },
+                    y: { grid: { display: false }, border: { color: '#e2e8f0' }, ticks: { color: '#334155', font: { weight: 600 }, autoSkip: false } }
+                }
+            },
+            plugins: [valorNaPonta]
+        });
+    }
+
     const FONTES = [
         { nome: "Agricultura", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=317010714&single=true&output=csv" },
         { nome: "Ciência e Tecnologia", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=761526176&single=true&output=csv" },
@@ -96,7 +247,9 @@
         { nome: "Fazenda", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=999891661&single=true&output=csv" },
         { nome: "Desenvolvimento Econômico", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=108826985&single=true&output=csv" },
         { nome: "Justiça", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=2097801446&single=true&output=csv" },
-        { nome: "Logística e Transportes", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=1623053344&single=true&output=csv" }
+        { nome: "Logística e Transportes", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFgGFnmTcdD5IEgxAdIUdpfnoeoWNBNPOqiBzPKWGF-3eQHMqZI85rfkFx2aB2KZ6ZkLpLOtwdGmY3/pub?gid=1623053344&single=true&output=csv" },
+        // Escolas (aba "Escolas v2"), divididas por CRE
+        { nome: "Educação", grupo: "CRE", url: "dados/escolas.csv" }
     ];
 
     async function init() {
@@ -106,6 +259,7 @@
             let impedimentosOrgaos = 0;
             let totalPerfis = 0;
             let secStats = [];
+            const grupoStats = {};
 
             const promises = FONTES.map(async (f) => {
                 const res = await fetch(f.url);
@@ -126,6 +280,12 @@
                         }
                         if (row['Instagram'] && row['Instagram'].length > 10) totalPerfis++;
                         if (row['Facebook'] && row['Facebook'].length > 10) totalPerfis++;
+                        if (f.grupo) {
+                            const g = row[f.grupo] || 'Sem ' + f.grupo;
+                            grupoStats[g] = grupoStats[g] || { total: 0, audit: 0 };
+                            grupoStats[g].total++;
+                            if (statusUpper === 'AUDITADO') grupoStats[g].audit++;
+                        }
                     }
                 });
 
@@ -146,9 +306,6 @@
             document.getElementById('sub-perfis').innerText = `${totalPerfis} Perfis Mapeados (IG+FB)`;
             document.getElementById('sub-imped').innerText = `${impedimentosOrgaos} Órgãos com impedimento`;
 
-            // Estimativa baseada em volume restante
-            const faltam = totalOrgaos - auditadosOrgaos;
-            document.getElementById('days').innerText = Math.ceil(faltam / 10) || 0;
 
             // Gráfico 1: Status Geral
             new Chart(document.getElementById('c1'), {
@@ -157,11 +314,22 @@
                     labels: ['Auditados', 'Pendentes', 'Impedimentos'],
                     datasets: [{
                         data: [auditadosOrgaos, pendentesOrgaos < 0 ? 0 : pendentesOrgaos, impedimentosOrgaos],
-                        backgroundColor: ['#10b981', '#f1f5f9', '#f97316'],
-                        borderWidth: 0
+                        backgroundColor: ['#10b981', '#e11d48', '#f59e0b'],
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        hoverOffset: 6
                     }]
                 },
-                options: { cutout: '80%', plugins: { legend: { position: 'bottom' } } }
+                options: {
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16, color: '#334155', font: { weight: 600 } }
+                        }
+                    }
+                }
             });
 
             // Gráfico 2: Ranking
@@ -173,19 +341,31 @@
                     datasets: [{
                         label: '% Concluído',
                         data: sorted.map(s => s.perc),
-                        backgroundColor: '#0f172a',
-                        borderRadius: 8
+                        backgroundColor: sorted.map(s => s.perc === 100 ? '#10b981' : '#004a8e'),
+                        borderRadius: 4,
+                        maxBarThickness: 18
                     }]
                 },
                 options: {
                     indexAxis: 'y',
-                    plugins: { legend: { display: false } },
-                    scales: { x: { max: 100, grid: { display: false } } }
-                }
+                    maintainAspectRatio: false,
+                    layout: { padding: { right: 44 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => ` ${ctx.parsed.x}% concluído` } }
+                    },
+                    scales: {
+                        x: { max: 100, display: false, grid: { display: false } },
+                        y: { grid: { display: false }, border: { color: '#e2e8f0' }, ticks: { color: '#334155', font: { weight: 600 }, autoSkip: false } }
+                    }
+                },
+                plugins: [valorNaPonta]
             });
 
+            renderRankingGrupos(grupoStats);
+
             document.getElementById('loader').style.display = 'none';
-        } catch(e) { console.error("Erro ao carregar dashboard:", e); }
+        } catch(e) { console.error("Erro ao carregar dashboard:", e); mostrarErroCarregamento(); }
     }
 
     window.onload = init;
